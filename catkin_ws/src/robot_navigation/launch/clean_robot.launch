@@ -1,0 +1,7 @@
+<launch>
+	<arg name="veh" default="slave"/>
+<!--	<group ns="$(arg veh)"> -->
+		<node name="clean_robot2" pkg="robot_navigation" type="clean_robot2" output="screen">
+		</node>
+<!--	</group> -->
+</launch>
