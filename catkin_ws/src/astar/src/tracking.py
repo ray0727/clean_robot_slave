@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 from pure_pursuit import PurePursuit
@@ -62,7 +62,7 @@ class Navigation(object):
                 target_frame, source_frame, rospy.Time(0))
         except (tf.Exception, tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.logerr("faile to catch tf %s 2 %s" %
-                         (target_frame, source_frame))
+                            (target_frame, source_frame))
             return
 
         trans_mat = tf.transformations.translation_matrix(trans_c)
@@ -70,9 +70,9 @@ class Navigation(object):
         tran_mat = np.dot(trans_mat, rot_mat)
 
         target_mat = np.array([[1, 0, 0, pose.position.x],
-                               [0, 1, 0, pose.position.y],
-                               [0, 0, 1, pose.position.z],
-                               [0, 0, 0, 1]])
+                                [0, 1, 0, pose.position.y],
+                                [0, 0, 1, pose.position.z],
+                                [0, 0, 0, 1]])
         target = np.dot(tran_mat, target_mat)
         quat = tf.transformations.quaternion_from_matrix(target)
         trans = tf.transformations.translation_from_matrix(target)
@@ -87,43 +87,42 @@ class Navigation(object):
         t_pose.pose.orientation.y = quat[1]
         t_pose.pose.orientation.z = quat[2]
         t_pose.pose.orientation.w = quat[3]
-
         return t_pose
-	
-	def tracking(self, event):
-		if self.target_global is None:
-			rospy.logerr("%s : no goal" % rospy.get_name())
-			return
 
-		target = PoseStamped()
-		target.header.frame_id = "map"
-		target.header.stamp = rospy.Time.now()
-		target.pose.position.x = self.target_global.x
-		target.pose.position.y = self.target_global.y
-		target.pose.position.z = self.target_global.z
+    def tracking(self, event):
+        if self.target_global is None:
+            rospy.logerr("%s : no goal" % rospy.get_name())
+            return
 
-		end_p = self.transform_pose(target.pose, "map", "base_link")
-		self.pub_target_marker.publish(self.to_marker(end_p, [0, 0, 1]))
+        target = PoseStamped()
+        target.header.frame_id = "map"
+        target.header.stamp = rospy.Time.now()
+        target.pose.position.x = self.target_global.x
+        target.pose.position.y = self.target_global.y
+        target.pose.position.z = self.target_global.z
 
-		start_p = PoseStamped()
-		start_p.header.frame_id = "map"
-		start_p.header.stamp = rospy.Time.now()
-		start_p.pose.position.x = 0
-		start_p.pose.position.y = 0
-		start_p.pose.position.z = 0
+        end_p = self.transform_pose(target.pose, "map", "base_link")
+        self.pub_target_marker.publish(self.to_marker(end_p, [0, 0, 1]))
+
+        start_p = PoseStamped()
+        start_p.header.frame_id = "map"
+        start_p.header.stamp = rospy.Time.now()
+        start_p.pose.position.x = 0
+        start_p.pose.position.y = 0
+        start_p.pose.position.z = 0
 
 
 
-		req_path = GetPlanRequest()
-		req_path.start = start_p
-		req_path.goal = end_p
-		rospy.loginfo("start: %f %f", start_p.pose.position.x, start_p.pose.position.y)
-		rospy.loginfo("end: %f %f", end_p.pose.position.x, end_p.pose.position.y)
+        req_path = GetPlanRequest()
+        req_path.start = start_p
+        req_path.goal = end_p
+        rospy.loginfo("start: %f %f", start_p.pose.position.x, start_p.pose.position.y)
+        rospy.loginfo("end: %f %f", end_p.pose.position.x, end_p.pose.position.y)
 
-		try:
+        try:
             res_path = self.req_path_srv(req_path)
         
-		except:
+        except:
             rospy.logerr("%s : path request fail" % rospy.get_name())
             return
 
