@@ -101,7 +101,7 @@ class Navigation(object):
         target.pose.position.y = self.target_global.y
         target.pose.position.z = self.target_global.z
 
-        end_p = self.transform_pose(target.pose, "map", "base_link")
+        end_p = self.transform_pose(target.pose, "map", "map")
         self.pub_target_marker.publish(self.to_marker(end_p, [0, 0, 1]))
 
         start_p = PoseStamped()
@@ -133,7 +133,7 @@ class Navigation(object):
             rospy.logwarn("goal reached")
             return
 
-        goal = self.transform_pose(goal.pose, "map", "base_link")
+        goal = self.transform_pose(goal.pose, "map", "map")
         self.pub_goal_marker.publish(self.to_marker(goal))
 
         self.pub_pid_goal.publish(goal)
