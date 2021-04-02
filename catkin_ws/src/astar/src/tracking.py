@@ -13,33 +13,32 @@ import numpy as np
 
 class Navigation(object):
     def __init__(self):
-		rospy.loginfo("Initializing %s" % rospy.get_name())
+        rospy.loginfo("Initializing %s" % rospy.get_name())
+        self.pursuit = PurePursuit()
+        self.pursuit.set_look_ahead_distance(0.2)
 
-		self.pursuit = PurePursuit()
-		self.pursuit.set_look_ahead_distance(0.2)
+        self.target_global = None
+        self.slampose = PoseStamped()
+        self.listener = tf.TransformListener()
+        self.pub_goal_marker = rospy.Publisher("goal_marker", Marker, queue_size=1)
 
-		self.target_global = None
-		self.slampose = PoseStamped()
-		self.listener = tf.TransformListener()
-		self.pub_goal_marker = rospy.Publisher("goal_marker", Marker, queue_size=1)
+        self.pub_target_marker = rospy.Publisher("target_marker", Marker, queue_size=1)
 
-		self.pub_target_marker = rospy.Publisher("target_marker", Marker, queue_size=1)
+        self.pub_pid_goal = rospy.Publisher("pid_control/goal", PoseStamped, queue_size=1)
 
-		self.pub_pid_goal = rospy.Publisher("pid_control/goal", PoseStamped, queue_size=1)
+        self.req_path_srv = rospy.ServiceProxy("plan_service", GetPlan)
 
-		self.req_path_srv = rospy.ServiceProxy("plan_service", GetPlan)
+        self.sub_goal = rospy.Subscriber("robot_point", Point, self.cb_goal, queue_size=1)
+        self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
+        self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 
-		self.sub_goal = rospy.Subscriber("robot_point", Point, self.cb_goal, queue_size=1)
-		self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose(), queue_size=1)
-		self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
-		
-		self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
+        self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
 
-		self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
+        self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 		
     def to_marker(self, goal, color=[0, 1, 0]):
-		marker = Marker()
-       	marker.header.frame_id = goal.header.frame_id
+        marker = Marker()
+        marker.header.frame_id = goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = marker.SPHERE
         marker.action = marker.ADD
