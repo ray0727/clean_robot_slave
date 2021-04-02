@@ -28,15 +28,15 @@ class ControlNode(object):
 		else:
 			#straight
 			if(angular<=straight_param and angular>=-straight_param):
-				if(speed+0.15<0.2):
-					self.kit.motor1.throttle=0.24
-					self.kit.motor2.throttle=0.2
-				elif(speed+0.15<=0.3 and speed+0.15>=0.2):
-					self.kit.motor1.throttle=speed+0.15
-					self.kit.motor2.throttle=speed+0.125
-				else:
+				if(speed+0.1<0.2):
 					self.kit.motor1.throttle=0.3
-					self.kit.motor2.throttle=0.25
+					self.kit.motor2.throttle=0.3
+				elif(speed+0.1<=0.3 and speed+0.1>=0.2):
+					self.kit.motor1.throttle=speed+0.2
+					self.kit.motor2.throttle=speed+0.2
+				else:
+					self.kit.motor1.throttle=0.4
+					self.kit.motor2.throttle=0.4
 			#turn right
 			elif(angular<-straight_param):
 				if(angular>=-0.4):

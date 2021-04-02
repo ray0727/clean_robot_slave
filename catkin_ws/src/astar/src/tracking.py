@@ -110,6 +110,7 @@ class Navigation(object):
         start_p.pose.position.x = self.slampose.pose.position.x
         start_p.pose.position.y = self.slampose.pose.position.y
         start_p.pose.position.z = self.slampose.pose.position.z
+        start_p.pose.orientation = self.slam_out_pose.orientation
 
 
 
