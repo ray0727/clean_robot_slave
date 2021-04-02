@@ -5,6 +5,7 @@ from pure_pursuit import PurePursuit
 from astar.srv import GoToPos, GoToPosResponse, GoToPosRequest
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path, Odometry
+from std_msgs.msg import Bool
 from nav_msgs.srv import GetPlan, GetPlanRequest, GetPlanResponse
 from visualization_msgs.msg import Marker
 import tf
@@ -26,7 +27,10 @@ class Navigation(object):
 
         self.pub_pid_goal = rospy.Publisher("pid_control/goal", PoseStamped, queue_size=1)
 
+        self.auto = True
+        self.pub_auto = rospy.Publisher('robot_go', Bool, queue_size=1)
         self.req_path_srv = rospy.ServiceProxy("plan_service", GetPlan)
+        self.req_stop_srv = rospy.ServiceProxy("auto_service", SetBool)
 
         self.sub_goal = rospy.Subscriber("robot_point", Point, self.cb_goal, queue_size=1)
         self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
@@ -132,6 +136,9 @@ class Navigation(object):
         goal = self.pursuit.get_goal(start_p)
         if goal is None:
 			rospy.logwarn("goal reached")
+            self.auto = False
+            self.pub_auto(self.auto)
+            self.auto = True
 			return
 		
         goal = self.transform_pose(goal.pose, "map", "map")
