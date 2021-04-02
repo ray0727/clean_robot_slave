@@ -33,7 +33,7 @@ class Navigation(object):
         self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 
         self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
-
+		
         self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 		
     def to_marker(self, goal, color=[0, 1, 0]):
@@ -110,7 +110,7 @@ class Navigation(object):
         start_p.pose.position.x = self.slampose.pose.position.x
         start_p.pose.position.y = self.slampose.pose.position.y
         start_p.pose.position.z = self.slampose.pose.position.z
-        start_p.pose.orientation = self.slam_out_pose.orientation
+        start_p.pose.orientation = self.slampose.pose.orientation
 
 
 
@@ -131,9 +131,9 @@ class Navigation(object):
 
         goal = self.pursuit.get_goal(start_p)
         if goal is None:
-            rospy.logwarn("goal reached")
-            return
-
+			rospy.logwarn("goal reached")
+			return
+		
         goal = self.transform_pose(goal.pose, "map", "map")
         self.pub_goal_marker.publish(self.to_marker(goal))
 
