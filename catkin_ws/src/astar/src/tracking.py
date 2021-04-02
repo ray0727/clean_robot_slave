@@ -33,7 +33,6 @@ class Navigation(object):
 		self.sub_goal = rospy.Subscriber("robot_point", Point, self.cb_goal, queue_size=1)
 
 		self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose(), queue_size=1)
-
 		self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 
 	def to_marker(self, goal, color=[0, 1, 0]):
