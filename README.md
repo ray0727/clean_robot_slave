@@ -1,5 +1,5 @@
 # clean_robot_slave
-Repo for 旺宏金矽獎2021   
+Repo for 旺宏金矽獎2021 clean_robot_slave    
 Team: A21-069     
 隊長：林育德      
 隊員：黃柏叡，許恩瑋     
