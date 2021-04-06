@@ -12,7 +12,7 @@ sudo apt-get install ros-melodic-move-base
 
 ### To clone the repo
 ```
-git clone https://github.com/ray0727/clean_robot_slave
+git clone https://github.com/ray0727/clean_robot_slave.git
 ```
 
 ### Run robot_slave_base
