@@ -138,7 +138,7 @@ include_directories(
 add_executable(maptest src/map_test.cpp)
 target_link_libraries(maptest ${catkin_LIBRARIES})
 
-add_executable(clean_robot2 src/clean_robot/clean_robot.cpp src/clean_robot/clean_robot.h src/clean_robot/map_scan.cpp src/clean_robot/map_scan.h src/clean_robot/Positioning.cpp src/clean_robot/Positioning.h)
+add_executable(clean_robot2 src/clean_robot/clean_robot.cpp src/clean_robot/clean_robot.h src/clean_robot/map_scan.cpp src/clean_robot/map_scan.h src/clean_robot/Positioning.cpp src/clean_robot/Positioning.h src/clean_robot/self_clean.h src/clean_robot/self_clean.cpp)
 target_link_libraries(clean_robot2 ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix

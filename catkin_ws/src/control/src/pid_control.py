@@ -278,10 +278,8 @@ class Robot_PID():
         # Start button
         if switch:
             self.auto_robot = True
-            self.auto = True
         else:
             self.auto_robot = False
-            self.auto = False
 
 
 if __name__ == '__main__':

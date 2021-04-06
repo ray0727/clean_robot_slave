@@ -40,8 +40,7 @@ class Pointf{
 };
 
 //--------2020.3.02-----
-class List_node{
-		
+class List_node{		
 	public:
 		Point *point;
 		List_node *next;

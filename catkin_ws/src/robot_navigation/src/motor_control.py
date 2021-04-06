@@ -17,7 +17,7 @@ class ControlNode(object):
 		self.move_cmd = msg
 		speed = self.move_cmd.linear.x
 		angular = self.move_cmd.angular.z
-		straight_param = 0.10
+		straight_param = 0.3
 
 		if(speed<=0.001 and speed>=-0.001 and angular==0):
 			self.kit.motor1.throttle= 0

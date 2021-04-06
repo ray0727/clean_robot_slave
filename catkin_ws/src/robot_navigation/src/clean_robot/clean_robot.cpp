@@ -1,30 +1,33 @@
 #include<stdio.h>
-#include <string.h>
+#include<string>
+#include<string.h>
+#include<math.h>
 #include "clean_robot.h"
 #include "map_scan.h"
 #include "Positioning.h"
 #include <vector>
 #include "sensor_msgs/LaserScan.h"
-//#include "self_clean.h"
+#include "self_clean.h"
 
 class Clean_Robot{
-	protected:
-		ros::Subscriber map_sub,slam_pose_sub,scandata_sub,masterscandata_sub,pump_sub;
-		ros::Publisher  point_pub;
+	public:
+		ros::Subscriber map_sub,slam_pose_sub,scandata_sub,masterscandata_sub,pump_sub,command_sub;
+		ros::Publisher  point_pub,slave_point_pub;
 		ros::NodeHandle node_;
 		List_node *clean_map;
 
 	public:
 		//----system status
 		int robot_status;//store robot status 
-		enum robot_status_define{Initial,Normal_Mode,Map_Complete,Map_notComplete,Robot_Move,Robot_Scan,Search_Unknown};		
+		enum robot_status_define{Initial=1,Normal_Mode=2,Map_Complete=4,Map_notComplete=8,Robot_Move=16,Robot_Scan=32,Search_Unknown=64,Outer_Command=128};		
 		bool odom_init; //determind code init
 		bool scan_init;
 		bool masterscan_init;
 		bool isrobotmove=false;
 		//----robot info
 		Point robot_pose;//robot's now position 
-		Point old_pose;//the old position of robot 
+		Point old_pose;//the old position of robot
+		Pointf pose; 
 
 		//----map info
 		Map_Scan *map_;		//get map data,and Print data[y*width+x]
@@ -35,26 +38,32 @@ class Clean_Robot{
 		sensor_msgs::LaserScan *scan;
 		sensor_msgs::LaserScan *masterscan;
 
+		//-----self clean
+		Self_Clean sc;
+		Pointf region[2];
+
 	Clean_Robot();
 	~Clean_Robot();
 	void mapcallback(const nav_msgs::OccupancyGrid::ConstPtr& msg); //
 	void slamposecallback(const geometry_msgs::PoseStamped::ConstPtr& Pose);
 	void scandatacallback(const sensor_msgs::LaserScan::ConstPtr& scandata);
 	void masterscandatacallback(const sensor_msgs::LaserScan::ConstPtr& masterscandata);
-	void pumpcallback(const std_msgs::String::ConstPtr& bumpdetect);	
+	void pumpcallback(const std_msgs::String::ConstPtr& bumpdetect);
+	void commandcallback(const std_msgs::String::ConstPtr& command);	
 	bool check_getmap(){return !(map_->mapcomplete) && !isrobotmove;} //map not complete and robot not move,it can get map
 
 };
 
 Clean_Robot::Clean_Robot(){
 	//----initial subscribe and publish
-	map_sub=node_.subscribe("slave/clean_robot_map",1000,&Clean_Robot::mapcallback,this);
+	map_sub=node_.subscribe("clean_robot_map",1000,&Clean_Robot::mapcallback,this);
 	slam_pose_sub=node_.subscribe("slave/slam_out_pose",1000,&Clean_Robot::slamposecallback,this);
 	scandata_sub=node_.subscribe("slave/scan",1000,&Clean_Robot::scandatacallback,this);
 	masterscandata_sub=node_.subscribe("master/scan",1000,&Clean_Robot::masterscandatacallback,this);
-	pump_sub=node_.subscribe("slave/bump_detect",1000,&Clean_Robot::pumpcallback,this);	
-	point_pub=node_.advertise<geometry_msgs::Point>("slave_robot_point",1000);
-	
+	pump_sub=node_.subscribe("slave/bump_detect",1000,&Clean_Robot::pumpcallback,this);
+	command_sub=node_.subscribe("master_command",1000,&Clean_Robot::commandcallback,this);
+	slave_point_pub=node_.advertise<geometry_msgs::PoseStamped>("slave_robot_point",1000);
+	point_pub=node_.advertise<geometry_msgs::PoseStamped>("slave/move_base_simple/goal",1000);
 	//----robot initial state
 	robot_pose=Point(0,0);
 	old_pose=Point(0,0);
@@ -94,8 +103,9 @@ void Clean_Robot::mapcallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 		for(int i=0;i<width*width;i++)
 			map_data[i]=msg->data[i];
 		map_->map_init(resolution,width,map_data);
+		sc.init(width,map_->map,resolution);
 	}else if(!check_getmap()){
-		map_->print_map(robot_pose);
+		//map_->print_map(robot_pose);
 	}else{
 		for(int i=0;i<width*width;i++)
 			map_data[i]=msg->data[i];
@@ -108,26 +118,32 @@ void Clean_Robot::slamposecallback(const geometry_msgs::PoseStamped::ConstPtr& P
 {
 	//ROS_INFO("slam_pose:%lf,%lf",Pose->pose.position.x,Pose->pose.position.y);
 	float diffx,diffy;
-	if(map_->mapinit){
-		if(Pose->pose.position.x>0){
+	if(map_->mapinit && position->init){
+		Pointf tfstom=position[0].transformto_masterodom(Pointf(Pose->pose.position.x,Pose->pose.position.y));
+		if(tfstom.x>0){
 			diffx=0.5;
 		}else{
 			diffx=-0.5;
 		}
-		if(Pose->pose.position.y>0){
+		if(tfstom.y>0){
 			diffy=0.5;
 		}else{
 			diffy=-0.5;
 		}	
-		robot_pose.x=(int)((Pose->pose.position.x)/map_->map_resolution+diffx);
-		robot_pose.y=(int)(Pose->pose.position.y/map_->map_resolution+diffy);
+		robot_pose.x=(int)((tfstom.x)/map_->map_resolution+diffx);
+		robot_pose.y=(int)(tfstom.y/map_->map_resolution+diffy);
 		odom_init=true;
-		//ROS_INFO("robot pose:%d,%d",robot_pose.x,robot_pose.y);
+		ROS_INFO("robot pose:%d,%d",robot_pose.x,robot_pose.y);
+		geometry_msgs::PoseStamped p;
+		p.header.frame_id="map";
+		p.header.stamp=ros::Time::now();
+		p.pose.position.x=tfstom.x;
+		p.pose.orientation=Pose->pose.orientation;
+		p.pose.orientation.w=cos(acos(p.pose.orientation.w)+position->rotatedegree/2);
+		p.pose.orientation.z=sin(asin(p.pose.orientation.z)+position->rotatedegree/2);
+		slave_point_pub.publish(p);
+		//point_pub.publish(p);
 	}
-	geometry_msgs::Point p;
-	p.x=Pose->pose.position.x+position->diffx;
-	p.y=Pose->pose.position.y+position->diffx;
-	point_pub.publish(p);
 }
 
 void Clean_Robot::scandatacallback(const sensor_msgs::LaserScan::ConstPtr& scandata){
@@ -178,11 +194,48 @@ void Clean_Robot::masterscandatacallback(const sensor_msgs::LaserScan::ConstPtr&
 }
 
 void Clean_Robot::pumpcallback(const std_msgs::String::ConstPtr& bumpdetect){
+	if(robot_status!=Initial)
+		return;
 	ROS_INFO("%s",bumpdetect->data.c_str());
 	if(!(scan_init && masterscan_init))
 		return;
 	if(strcmp(bumpdetect->data.c_str(),"HIGH")==0)
 		position[0].calculatediff(masterscan,scan);
+}
+
+void Clean_Robot::commandcallback(const std_msgs::String::ConstPtr& command){
+	ROS_INFO("region callback");
+	if(robot_status & Initial)
+		return;
+	robot_status^=Outer_Command;
+	std::string s=command->data;
+	char * cstr = new char [s.length()+1];
+  	std::strcpy (cstr, s.c_str());
+
+  	// cstr now contains a c-string copy of str
+
+  	char * p = std::strtok (cstr,"\n");
+	p = std::strtok (NULL,"\n");
+	int i=0;
+  	for(i=0;i<2 && p!=0;i++)
+  	{
+		this->region[i].x=atof(p);
+    	p = std::strtok(NULL,"\n");
+		this->region[i].y=atof(p);
+    	p = std::strtok(NULL,"\n");
+  	}
+	if(this->region[0].x<this->region[1].x){
+		float t=this->region[0].x;
+		this->region[0].x=this->region[1].x;
+		this->region[1].x=t;
+	}
+	if(this->region[0].y<this->region[1].y){
+		float t=this->region[0].y;
+		this->region[0].y=this->region[1].y;
+		this->region[1].y=t;
+	}
+
+  	delete[] cstr;
 }
 
 int main(int argc,char *argv[]){
@@ -195,16 +248,30 @@ int main(int argc,char *argv[]){
 		//ROS_INFO("main");
 		switch(main.robot_status){
 			case main.Initial:
-				if(main.scan_init && main.masterscan_init)
-					//main.position[0].calculatediff(main.masterscan,main.scan);
-				//main.robot_status=main.Normal_Mode;
+				if(main.scan_init && main.masterscan_init){
+					ROS_INFO("scan_initial");
+					main.position[0].calculatediff(main.masterscan,main.scan);
+					main.sc.set_tf(main.position[0].diffx,main.position[0].diffy,main.position[0].rotatedegree);
+				}
+				main.robot_status=main.Normal_Mode;
 				break;
 			case main.Normal_Mode:
 
 				break;
+			case (main.Normal_Mode | main.Outer_Command):
+				main.sc.start_clean(main.region);
+				main.robot_status=main.Robot_Move;
+				if(!main.sc.send_point(main.point_pub))
+					main.robot_status=main.Normal_Mode;
+				break;
 			case main.Robot_Move:
-
-
+				if(main.sc.is_arrive(main.robot_pose)){
+					if(main.sc.send_point(main.point_pub)){
+						main.robot_status=main.Robot_Move;
+					}else{
+						main.robot_status=main.Normal_Mode;
+					}
+				}
 				break;
 		}
 	}

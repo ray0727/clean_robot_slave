@@ -27,14 +27,7 @@ void Map_Scan::map_init(double resolution,int width,int *msg_data){
 	map=new char [map_width*map_width];
 	int data;
 	for(int i=0;i<map_width*map_width;i++){
-		data=msg_data[i];
-		if(data==-1){
-			map[i]='?';
-		}else if(data<=100 && data>=9){
-			map[i]=data/10+'0'-1;
-		}else{
-			map[i]=' ';
-		}	
+		map[i]=(char)msg_data[i];
 	}
 	print_map(Point(0,0));
 	this->mapinit=true;
@@ -59,25 +52,9 @@ bool Map_Scan::checkmap(int *msg_data,Point robot_pose){
 		int data;
 		ROS_INFO("checkmap");
 		for(int i=0;i<map_width*map_width;i++){
-			data=msg_data[i];
-			//ROS_INFO("%d",i);
-			if(data==-1){
-				map[i]='?';
-			}else if(data==100){
-				map[i]='9';
-			}else{
-				map[i]=' ';
-				if(mapcomplete && i>2*map_width && i<(map_width*(map_width-2)-1))
-					for(int j=0;j<4;j++){
-						int around=i+direct[j].y*map_width+direct[j].x;
-						if(msg_data[around]==-1 && (msg_data[around+map_width]>=10 || msg_data[around+1]>=10 || msg_data[around-map_width]>=10 || msg_data[around-1]>=10)){
-							//if the unKnown grid beside the wall map is ok,because robot can not pass;
-							mapcomplete=false;						
-						}
-					}
-			}			
+			map[i]=(char)msg_data[i];
 		}
-		print_map(robot_pose);
+		//print_map(robot_pose);
 		return mapcomplete;
 }
 

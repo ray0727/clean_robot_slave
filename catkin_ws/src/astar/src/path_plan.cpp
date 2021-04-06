@@ -35,7 +35,7 @@ public:
 PathPlan::PathPlan(NodeHandle nh)
 {
   pub_path = nh.advertise<nav_msgs::Path>("astar_path", 1);
-  sub_map = nh.subscribe("map", 1, &PathPlan::cb_map, this);
+  sub_map = nh.subscribe("/slave/map", 1, &PathPlan::cb_map, this);
   plan_service = nh.advertiseService("plan_service", &PathPlan::cb_service, this);
 }
 

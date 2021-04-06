@@ -30,15 +30,13 @@ class Navigation(object):
         self.auto = True
         self.pub_auto = rospy.Publisher('robot_go', Bool, queue_size=1)
         self.req_path_srv = rospy.ServiceProxy("plan_service", GetPlan)
-        self.req_stop_srv = rospy.ServiceProxy("auto_service", SetBool)
 
-        self.sub_goal = rospy.Subscriber("robot_point", Point, self.cb_goal, queue_size=1)
+        self.sub_goal = rospy.Subscriber("slave_target_point", PoseStamped, self.cb_goal, queue_size=1)
         self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
         self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
 
-        self.sub_pose = rospy.Subscriber("slam_out_pose", PoseStamped, self.cb_pose, queue_size=1)
 		
-        self.timer = rospy.Timer(rospy.Duration(0.2), self.tracking)
+        self.timer = rospy.Timer(rospy.Duration(0.15), self.tracking)
 		
     def to_marker(self, goal, color=[0, 1, 0]):
         marker = Marker()
@@ -98,12 +96,9 @@ class Navigation(object):
             rospy.logerr("%s : no goal" % rospy.get_name())
             return
 
-        target = PoseStamped()
-        target.header.frame_id = "map"
-        target.header.stamp = rospy.Time.now()
-        target.pose.position.x = self.target_global.x
-        target.pose.position.y = self.target_global.y
-        target.pose.position.z = self.target_global.z
+		if self.slampose.pose.position.x >= self.target_global.x-0.1 and self.slampose.pose.position.x <= self.target_global.x+0.1 and self.slampose.pose.position.y >= self.target_global.y-0.1 and  self.slampose.pose.position.y <= self.target_global.y+0.1:
+			return
+        target = self.target_global
 
         end_p = self.transform_pose(target.pose, "map", "map")
         self.pub_target_marker.publish(self.to_marker(end_p, [0, 0, 1]))
@@ -136,9 +131,6 @@ class Navigation(object):
         goal = self.pursuit.get_goal(start_p)
         if goal is None:
 			rospy.logwarn("goal reached")
-            self.auto = False
-            self.pub_auto(self.auto)
-            self.auto = True
 			return
 		
         goal = self.transform_pose(goal.pose, "map", "map")

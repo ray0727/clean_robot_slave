@@ -221,10 +221,6 @@ add_executable(path_plan src/path_plan.cpp src/astar.h src/astar.cpp)
 add_dependencies(path_plan ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(path_plan ${catkin_LIBRARIES})
 
-add_executable(depthpc2grid src/depthpc2grid.cpp src/depthpc2grid.h)
-add_dependencies(depthpc2grid ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-target_link_libraries(depthpc2grid ${catkin_LIBRARIES})
-
 add_executable(lidarpc2grid src/lidarpc2grid.cpp src/depthpc2grid.h)
 add_dependencies(lidarpc2grid ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(lidarpc2grid ${catkin_LIBRARIES})

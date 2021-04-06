@@ -4,6 +4,6 @@
 		<include file="$(find robot_navigation)/launch/base.launch" />
 		<include file="$(find rf2o_laser_odometry)/launch/rf2o_laser_odometry.launch" />
 		<include file="$(find mapping)/launch/mapping.launch" />
-		<include file="$(find astar)/launch/tracking.launch" /> 
+		<include file="$(find robot_navigation)/launch/move_base.launch" />
 	</group>
 </launch>
