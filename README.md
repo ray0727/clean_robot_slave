@@ -8,7 +8,9 @@ Team: A21-069
 sudo apt-get install ros-melodic-move-base
 
 ### To clone the repo
-'''git clone https://github.com/ray0727/clean_robot_slave'''
+'''javascript
+git clone https://github.com/ray0727/clean_robot_slave
+'''
 
 ### Run robot_slave_base
 roslaunch robot_navigation open_all_slave_move.launch
