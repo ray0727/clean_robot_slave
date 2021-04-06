@@ -5,13 +5,12 @@ Team: A21-069
 隊員：黃柏叡，許恩瑋
 
 ### Prerequisite
-sudo apt-get install ros-melodic-move-base
+> sudo apt-get install ros-melodic-move-base
 
 ### To clone the repo
-'''javascript
-git clone https://github.com/ray0727/clean_robot_slave
-'''
+> git clone https://github.com/ray0727/clean_robot_slave
+
 
 ### Run robot_slave_base
-roslaunch robot_navigation open_all_slave_move.launch
+> roslaunch robot_navigation open_all_slave_move.launch
 
